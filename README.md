@@ -1,16 +1,11 @@
-# novi
+# Novi Assistant - Flutter App
 
-A new Flutter project.
+Novi is a smart virtual assistant app built using Flutter and OpenAI's API. It allows users to interact with the assistant through text and get real-time responses, powered by OpenAI’s GPT model.
 
-## Getting Started
+## Setup Instructions
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
