@@ -1,9 +1,9 @@
-import 'package:novi/feature_box.dart';
 import 'package:novi/openai_service.dart';
 import 'package:novi/pallete.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:novi/screens/clerk_sign_in_example.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -91,11 +91,19 @@ class _HomePageState extends State<HomePage> {
         ),
         // leading: const Icon(Icons.menu),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.pushNamed(context, ClerkSignInExample.path);
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
             child: Column(
               children: [
                 // virtual assistant picture

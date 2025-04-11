@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
           // home: const ClerkSignInExample(),
           initialRoute:  HomePage.path,
           routes: {
+            ClerkSignInExample.path: (context) => const ClerkSignInExample(),
             HomePage.path: (context) => ClerkAuthBuilder(
               signedInBuilder: (context, user) => const HomePage(),
               signedOutBuilder: (context, _) => const ClerkSignInExample(),
