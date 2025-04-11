@@ -1,6 +1,7 @@
 import 'package:novi/feature_box.dart';
 import 'package:novi/openai_service.dart';
 import 'package:novi/pallete.dart';
+import 'package:novi/login_page.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -88,8 +89,19 @@ class _HomePageState extends State<HomePage> {
         title: BounceInDown(
           child: const Text('Novi'),
         ),
-        // leading: const Icon(Icons.menu),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.login),
+            tooltip: 'Login',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -97,35 +109,6 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Column(
               children: [
-                // virtual assistant picture
-                // ZoomIn(
-                //   child: Stack(
-                //     children: [
-                //       Center(
-                //         child: Container(
-                //           height: 120,
-                //           width: 120,
-                //           margin: const EdgeInsets.only(top: 4),
-                //           decoration: const BoxDecoration(
-                //             color: Pallete.assistantCircleColor,
-                //             shape: BoxShape.circle,
-                //           ),
-                //         ),
-                //       ),
-                //       Container(
-                //         height: 123,
-                //         decoration: const BoxDecoration(
-                //           shape: BoxShape.circle,
-                //           image: DecorationImage(
-                //             image: AssetImage(
-                //               'assets/images/virtualAssistant.png',
-                //             ),
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
                 Center(
                   child: Container(
                     height: 123,
@@ -139,7 +122,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                // chat bubble
                 FadeInRight(
                   child: Visibility(
                     visible: generatedImageUrl == null,
@@ -176,34 +158,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                // if (generatedImageUrl != null)
-                //   Padding(
-                //     padding: const EdgeInsets.all(10.0),
-                //     child: ClipRRect(
-                //       borderRadius: BorderRadius.circular(20),
-                //       child: Image.network(generatedImageUrl!),
-                //     ),
-                //   ),
-                // SlideInLeft(
-                //   child: Visibility(
-                //     visible: generatedContent == null && generatedImageUrl == null,
-                //     child: Container(
-                //       padding: const EdgeInsets.all(10),
-                //       alignment: Alignment.centerLeft,
-                //       margin: const EdgeInsets.only(top: 10, left: 22),
-                //       child: const Text(
-                //         'Here are a few features',
-                //         style: TextStyle(
-                //           fontFamily: 'Cera Pro',
-                //           color: Pallete.mainFontColor,
-                //           fontSize: 20,
-                //           fontWeight: FontWeight.bold,
-                //         ),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                // features list
               ],
             ),
           ),
