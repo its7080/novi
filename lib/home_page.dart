@@ -121,8 +121,7 @@ class _HomePageState extends State<HomePage> {
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
-                          image:
-                              AssetImage('assets/images/virtualAssistant.png'),
+                          image: AssetImage('assets/images/ai.gif'),
                           fit: BoxFit.cover,
                         ),
                       ),

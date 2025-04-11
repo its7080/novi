@@ -46,7 +46,7 @@ class _UserHomePageState extends State<UserHomePage> {
 
     setState(() {
       currentUser = user;
-      chatHistory = List<ChatMessage>.from(user.chatHistory); // Clone list
+      chatHistory = List<ChatMessage>.from(user.chatHistory);
     });
   }
 
@@ -131,16 +131,30 @@ class _UserHomePageState extends State<UserHomePage> {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+        padding: const EdgeInsets.all(14),
+        constraints: const BoxConstraints(maxWidth: 300),
         decoration: BoxDecoration(
-          color: isUser ? Colors.blueAccent : Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
+          color: isUser ? Colors.teal.shade600 : Colors.grey.shade200,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isUser ? 16 : 0),
+            bottomRight: Radius.circular(isUser ? 0 : 16),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
         child: Text(
           msg.message,
           style: TextStyle(
-            color: isUser ? Colors.white : Colors.black,
+            color: isUser ? Colors.white : Colors.black87,
+            fontSize: 16,
           ),
         ),
       ),
@@ -150,11 +164,14 @@ class _UserHomePageState extends State<UserHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Novi AI Assistant'),
+        backgroundColor: Colors.teal,
+        title: const Text('Novi AI Assistant',
+            style: TextStyle(color: Colors.white)),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle),
+            icon: const Icon(Icons.account_circle, color: Colors.white),
             onSelected: (value) {
               if (value == 'logout') logout();
             },
@@ -169,37 +186,48 @@ class _UserHomePageState extends State<UserHomePage> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: chatHistory.length,
-                itemBuilder: (context, index) {
-                  return buildMessage(chatHistory[index]);
-                },
+      body: Column(
+        children: [
+          Expanded(
+            child: chatHistory.isEmpty
+                ? const Center(child: Text("Start a conversation..."))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    itemCount: chatHistory.length,
+                    itemBuilder: (context, index) {
+                      return buildMessage(chatHistory[index]);
+                    },
+                  ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  )
+                ],
               ),
-            ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _textController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: "Type your message...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send),
+                    icon: const Icon(Icons.send, color: Colors.teal),
                     onPressed: () {
                       final text = _textController.text.trim();
                       if (text.isNotEmpty) {
@@ -209,7 +237,10 @@ class _UserHomePageState extends State<UserHomePage> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(isListening ? Icons.stop : Icons.mic),
+                    icon: Icon(
+                      isListening ? Icons.stop_circle : Icons.mic,
+                      color: Colors.teal,
+                    ),
                     onPressed: () async {
                       if (!isListening) {
                         await startListening();
@@ -221,8 +252,8 @@ class _UserHomePageState extends State<UserHomePage> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

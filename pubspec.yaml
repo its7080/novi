@@ -86,6 +86,7 @@ flutter:
       fonts:
         - asset: assets/fonts/Cera-Pro-Bold.otf
         - asset: assets/fonts/Cera-Pro-Medium.otf
+        - asset: assets/images/ai.gif
   # fonts:
   #   - family: Schyler
   #     fonts:
