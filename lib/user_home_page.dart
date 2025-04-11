@@ -1,15 +1,12 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
 import 'package:novi/ai_service.dart';
 import 'package:novi/login_page.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:novi/models/chat_message.dart';
+import 'package:novi/models/user_model.dart';
 
 class UserHomePage extends StatefulWidget {
   final String userEmail;
@@ -21,70 +18,44 @@ class UserHomePage extends StatefulWidget {
 }
 
 class _UserHomePageState extends State<UserHomePage> {
-  final speechToText = SpeechToText();
-  final flutterTts = FlutterTts();
-  final openAIService = OpenAIService();
-
+  final SpeechToText speechToText = SpeechToText();
+  final FlutterTts flutterTts = FlutterTts();
+  final OpenAIService openAIService = OpenAIService();
   final TextEditingController _textController = TextEditingController();
-  List<Map<String, String>> chatHistory = [];
 
-  late File localJsonFile;
-  late Map<String, dynamic> jsonData;
+  List<ChatMessage> chatHistory = [];
   bool isListening = false;
+  late Box<UserModel> userBox;
+  late UserModel currentUser;
 
   @override
   void initState() {
     super.initState();
+    initHive();
     initSpeechToText();
-    initTextToSpeech();
-    loadJsonData();
+    initTTS();
   }
 
-  Future<void> initTextToSpeech() async {
-    await flutterTts.setSharedInstance(true);
+  Future<void> initHive() async {
+    userBox = Hive.box<UserModel>('users');
+
+    final user = userBox.values.firstWhere(
+      (u) => u.email == widget.userEmail,
+      orElse: () => throw Exception("User not found"),
+    );
+
+    setState(() {
+      currentUser = user;
+      chatHistory = List<ChatMessage>.from(user.chatHistory); // Clone list
+    });
   }
 
   Future<void> initSpeechToText() async {
     await speechToText.initialize();
   }
 
-  Future<void> loadJsonData() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/novi_user_data.json';
-    localJsonFile = File(filePath);
-
-    if (!await localJsonFile.exists()) {
-      final data = await rootBundle.loadString('assets/novi_user_data.json');
-      await localJsonFile.writeAsString(data);
-    }
-
-    final contents = await localJsonFile.readAsString();
-    jsonData = json.decode(contents);
-
-    setState(() {
-      chatHistory = List<Map<String, String>>.from(
-        (jsonData['chats'][widget.userEmail] ?? []),
-      );
-    });
-  }
-
-  Future<void> saveChatHistory() async {
-    jsonData['chats'][widget.userEmail] = chatHistory;
-    await localJsonFile.writeAsString(json.encode(jsonData));
-  }
-
-  Future<void> handleSendMessage(String message) async {
-    setState(() {
-      chatHistory.add({'role': 'user', 'message': message});
-    });
-
-    final response = await openAIService.isArtPromptAPI(message);
-    setState(() {
-      chatHistory.add({'role': 'ai', 'message': response});
-    });
-
-    await flutterTts.speak(response);
-    await saveChatHistory();
+  Future<void> initTTS() async {
+    await flutterTts.setSharedInstance(true);
   }
 
   void logout() {
@@ -101,35 +72,6 @@ class _UserHomePageState extends State<UserHomePage> {
     }
   }
 
-  @override
-  void dispose() {
-    speechToText.stop();
-    flutterTts.stop();
-    _textController.dispose();
-    super.dispose();
-  }
-
-  Widget buildMessage(String role, String message) {
-    bool isUser = role == 'user';
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isUser ? Colors.blueAccent : Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          message,
-          style: TextStyle(
-            color: isUser ? Colors.white : Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> startListening() async {
     if (!isListening && await speechToText.hasPermission) {
       setState(() => isListening = true);
@@ -142,6 +84,67 @@ class _UserHomePageState extends State<UserHomePage> {
       await speechToText.stop();
       setState(() => isListening = false);
     }
+  }
+
+  Future<void> handleSendMessage(String message) async {
+    final userMsg = ChatMessage(
+      message: message,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
+
+    setState(() {
+      chatHistory.add(userMsg);
+    });
+
+    currentUser.chatHistory.add(userMsg);
+    await currentUser.save();
+
+    final aiResponse = await openAIService.isArtPromptAPI(message);
+
+    final aiMsg = ChatMessage(
+      message: aiResponse,
+      isUser: false,
+      timestamp: DateTime.now(),
+    );
+
+    setState(() {
+      chatHistory.add(aiMsg);
+    });
+
+    currentUser.chatHistory.add(aiMsg);
+    await currentUser.save();
+
+    await flutterTts.speak(aiResponse);
+  }
+
+  @override
+  void dispose() {
+    speechToText.stop();
+    flutterTts.stop();
+    _textController.dispose();
+    super.dispose();
+  }
+
+  Widget buildMessage(ChatMessage msg) {
+    final isUser = msg.isUser;
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isUser ? Colors.blueAccent : Colors.grey[300],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          msg.message,
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -171,11 +174,9 @@ class _UserHomePageState extends State<UserHomePage> {
           children: [
             Expanded(
               child: ListView.builder(
-                reverse: false,
                 itemCount: chatHistory.length,
                 itemBuilder: (context, index) {
-                  final entry = chatHistory[index];
-                  return buildMessage(entry['role']!, entry['message']!);
+                  return buildMessage(chatHistory[index]);
                 },
               ),
             ),

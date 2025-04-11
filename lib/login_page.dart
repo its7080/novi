@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:novi/user_home_page.dart';
+import 'package:hive/hive.dart';
+import 'package:novi/models/user_model.dart';
 import 'package:novi/signup_page.dart';
+import 'package:novi/user_home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,20 +17,24 @@ class _LoginPageState extends State<LoginPage> {
   String? _errorMessage;
 
   Future<void> _login() async {
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    final String data =
-        await rootBundle.loadString('assets/novi_user_data.json');
-    final Map<String, dynamic> jsonData = json.decode(data);
-    final List users = jsonData['users'];
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = "Please enter both email and password.");
+      return;
+    }
 
-    final user = users.firstWhere(
-      (u) => u['email'] == email && u['password'] == password,
-      orElse: () => null,
-    );
+    final usersBox = Hive.box<UserModel>('users');
 
-    if (user != null) {
+    if (!usersBox.containsKey(email)) {
+      setState(() => _errorMessage = "User does not exist.");
+      return;
+    }
+
+    final user = usersBox.get(email);
+
+    if (user != null && user.password == password) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -38,9 +42,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      setState(() {
-        _errorMessage = 'Invalid email or password.';
-      });
+      setState(() => _errorMessage = "Invalid credentials.");
     }
   }
 
@@ -83,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "Welcome Back!",
+                    "Welcome Back",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -92,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Login to continue to Novi AI",
+                    "Login to your Novi AI account",
                     style: TextStyle(color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
@@ -134,20 +136,19 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   TextButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignUpPage()),
+                        MaterialPageRoute(builder: (_) => const SignUpPage()),
                       );
                     },
                     child: const Text("Don't have an account? Sign Up"),
                   ),
                   if (_errorMessage != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.only(top: 12),
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(color: Colors.red),

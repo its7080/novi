@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:hive/hive.dart';
+import 'package:novi/models/user_model.dart';
 import 'package:novi/user_home_page.dart';
-import 'package:path_provider/path_provider.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -17,28 +14,6 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? _errorMessage;
-  late File localJsonFile;
-  late Map<String, dynamic> jsonData;
-
-  @override
-  void initState() {
-    super.initState();
-    loadJsonFile();
-  }
-
-  Future<void> loadJsonFile() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/novi_user_data.json';
-    localJsonFile = File(filePath);
-
-    if (!await localJsonFile.exists()) {
-      final data = await rootBundle.loadString('assets/novi_user_data.json');
-      await localJsonFile.writeAsString(data);
-    }
-
-    final contents = await localJsonFile.readAsString();
-    jsonData = json.decode(contents);
-  }
 
   Future<void> _signUp() async {
     final email = _emailController.text.trim();
@@ -49,22 +24,20 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    final List users = jsonData['users'];
+    final usersBox = Hive.box<UserModel>('users');
 
-    final existingUser = users.firstWhere(
-      (u) => u['email'] == email,
-      orElse: () => null,
-    );
-
-    if (existingUser != null) {
+    if (usersBox.containsKey(email)) {
       setState(() => _errorMessage = "User already exists.");
       return;
     }
 
-    users.add({'email': email, 'password': password});
-    jsonData['chats'][email] = [];
+    final newUser = UserModel(
+      email: email,
+      password: password,
+      chatHistory: [],
+    );
 
-    await localJsonFile.writeAsString(json.encode(jsonData));
+    await usersBox.put(email, newUser);
 
     if (mounted) {
       Navigator.pushReplacement(
