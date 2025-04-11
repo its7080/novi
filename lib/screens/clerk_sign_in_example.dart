@@ -14,7 +14,10 @@ class ClerkSignInExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clerk UI Sign In'),
+        title: ClerkAuthBuilder(
+          signedInBuilder: (context, authState) => const Text('Already logged in'),
+          signedOutBuilder: (context, authState) => const Text('Sign In'),
+        ),
       ),
       body: SafeArea(
         child: ClerkErrorListener(

@@ -8,13 +8,12 @@ import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:novi/screens/clerk_sign_in_example.dart';
 
 Future<void> main() async {
-    await clerk.setUpLogging(printer: const LogPrinter());
+  await clerk.setUpLogging(printer: const LogPrinter());
 
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-
   const MyApp({super.key});
 
   @override
@@ -32,9 +31,14 @@ class MyApp extends StatelessWidget {
               backgroundColor: Pallete.whiteColor,
             ),
           ),
-          home: const ClerkSignInExample(),
+          // home: const ClerkSignInExample(),
+          initialRoute:  HomePage.path,
           routes: {
-            ClerkSignInExample.path: (context) => const ClerkSignInExample(),},
+            HomePage.path: (context) => ClerkAuthBuilder(
+              signedInBuilder: (context, user) => const HomePage(),
+              signedOutBuilder: (context, _) => const ClerkSignInExample(),
+            ),
+          },
         ));
   }
 }
