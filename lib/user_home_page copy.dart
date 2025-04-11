@@ -30,7 +30,6 @@ class _UserHomePageState extends State<UserHomePage> {
 
   late File localJsonFile;
   late Map<String, dynamic> jsonData;
-  bool isListening = false;
 
   @override
   void initState() {
@@ -95,7 +94,7 @@ class _UserHomePageState extends State<UserHomePage> {
   }
 
   void onSpeechResult(SpeechRecognitionResult result) {
-    if (result.finalResult && result.recognizedWords.isNotEmpty) {
+    if (result.recognizedWords.isNotEmpty && result.confidence > 0.6) {
       _textController.text = result.recognizedWords;
       handleSendMessage(result.recognizedWords);
     }
@@ -128,20 +127,6 @@ class _UserHomePageState extends State<UserHomePage> {
         ),
       ),
     );
-  }
-
-  Future<void> startListening() async {
-    if (!isListening && await speechToText.hasPermission) {
-      setState(() => isListening = true);
-      await speechToText.listen(onResult: onSpeechResult);
-    }
-  }
-
-  Future<void> stopListening() async {
-    if (isListening) {
-      await speechToText.stop();
-      setState(() => isListening = false);
-    }
   }
 
   @override
@@ -179,7 +164,7 @@ class _UserHomePageState extends State<UserHomePage> {
                 },
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
@@ -198,7 +183,7 @@ class _UserHomePageState extends State<UserHomePage> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send),
+                    icon: Icon(Icons.send),
                     onPressed: () {
                       final text = _textController.text.trim();
                       if (text.isNotEmpty) {
@@ -208,12 +193,16 @@ class _UserHomePageState extends State<UserHomePage> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(isListening ? Icons.stop : Icons.mic),
+                    icon:
+                        Icon(speechToText.isListening ? Icons.stop : Icons.mic),
                     onPressed: () async {
-                      if (!isListening) {
-                        await startListening();
+                      if (await speechToText.hasPermission &&
+                          !speechToText.isListening) {
+                        await speechToText.listen(onResult: onSpeechResult);
+                      } else if (speechToText.isListening) {
+                        await speechToText.stop();
                       } else {
-                        await stopListening();
+                        initSpeechToText();
                       }
                     },
                   ),

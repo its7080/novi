@@ -1,46 +1,78 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:novi/user_home_page.dart';
-import 'package:novi/signup_page.dart';
+import 'package:path_provider/path_provider.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? _errorMessage;
+  late File localJsonFile;
+  late Map<String, dynamic> jsonData;
 
-  Future<void> _login() async {
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text;
+  @override
+  void initState() {
+    super.initState();
+    loadJsonFile();
+  }
 
-    final String data =
-        await rootBundle.loadString('assets/novi_user_data.json');
-    final Map<String, dynamic> jsonData = json.decode(data);
+  Future<void> loadJsonFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/novi_user_data.json';
+    localJsonFile = File(filePath);
+
+    if (!await localJsonFile.exists()) {
+      final data = await rootBundle.loadString('assets/novi_user_data.json');
+      await localJsonFile.writeAsString(data);
+    }
+
+    final contents = await localJsonFile.readAsString();
+    jsonData = json.decode(contents);
+  }
+
+  Future<void> _signUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = "Email and password can't be empty.");
+      return;
+    }
+
     final List users = jsonData['users'];
 
-    final user = users.firstWhere(
-      (u) => u['email'] == email && u['password'] == password,
+    final existingUser = users.firstWhere(
+      (u) => u['email'] == email,
       orElse: () => null,
     );
 
-    if (user != null) {
+    if (existingUser != null) {
+      setState(() => _errorMessage = "User already exists.");
+      return;
+    }
+
+    users.add({'email': email, 'password': password});
+    jsonData['chats'][email] = [];
+
+    await localJsonFile.writeAsString(json.encode(jsonData));
+
+    if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => UserHomePage(userEmail: email),
         ),
       );
-    } else {
-      setState(() {
-        _errorMessage = 'Invalid email or password.';
-      });
     }
   }
 
@@ -83,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "Welcome Back!",
+                    "Create Account",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -92,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Login to continue to Novi AI",
+                    "Join Novi AI Assistant",
                     style: TextStyle(color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
@@ -120,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: _login,
+                    onPressed: _signUp,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           vertical: 14, horizontal: 50),
@@ -130,20 +162,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     child: const Text(
-                      "Login",
+                      "Sign Up",
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignUpPage()),
-                      );
-                    },
-                    child: const Text("Don't have an account? Sign Up"),
                   ),
                   if (_errorMessage != null)
                     Padding(
