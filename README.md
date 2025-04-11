@@ -9,3 +9,4 @@ Novi is a smart virtual assistant app built using Flutter and OpenAI's API. It a
    ```bash
    flutter pub get
    ```
+

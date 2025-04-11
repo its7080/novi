@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fluttercollege/screens/payment_gateway.dart';
-import 'package:fluttercollege/screens/singup_screen.dart';
-import 'package:get/get.dart';
+// import 'package:fluttercollege/screens/payment_gateway.dart';
+// import 'package:fluttercollege/screens/singup_screen.dart';
+// import 'package:get/get.dart';
 import 'forgot_password.dart';
 
 
@@ -25,7 +25,7 @@ class LoginScreen extends StatelessWidget {
                   Positioned(
         
                     child: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         image: DecorationImage(
                             image: AssetImage('assets/images/AI logo.png'),
                             fit: BoxFit.fill
@@ -39,19 +39,19 @@ class LoginScreen extends StatelessWidget {
             ),
         
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text("Login", style:  TextStyle(color: Color.fromRGBO(49, 39, 79, 1), fontWeight: FontWeight.bold, fontSize: 30),),
-                  SizedBox(height: 25,),
+                  const Text("Login", style:  TextStyle(color: Color.fromRGBO(49, 39, 79, 1), fontWeight: FontWeight.bold, fontSize: 30),),
+                 const SizedBox(height: 25,),
                   Container(
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
+                      boxShadow: const [
+                      BoxShadow(
                           color: Color.fromRGBO(196, 135, 198, .3),
                           blurRadius: 10,
                           offset: Offset(0,10),
@@ -61,13 +61,13 @@ class LoginScreen extends StatelessWidget {
                     child: Column(
                       children: <Widget>[
                         Container(
-                          padding: EdgeInsets.all(5),
-                          decoration: BoxDecoration(
+                          padding: const EdgeInsets.all(5),
+                          decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(
                                   color: Colors.grey
                               ))
                           ),
-                          child: TextField(
+                          child:const TextField(
                             decoration: InputDecoration(
                                 border: InputBorder.none,
                                 hintText: "User Name",
@@ -76,9 +76,9 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.all(5),
+                          padding: const EdgeInsets.all(5),
         
-                          child: TextField(
+                          child:const TextField(
                             obscureText: true,
                             decoration: InputDecoration(
                                 suffixIcon: Icon(Icons.visibility_off, color: Colors.grey),
@@ -91,41 +91,41 @@ class LoginScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: 20,),
+              const    SizedBox(height: 20,),
                   GestureDetector(
                     onTap: (){
-                      Get.to(()=> ForgotPassword());
+                      // Get.to(()=> ForgotPassword());
                     },
                     child: Container(
-                        child: Text("Forgot Password?", style: TextStyle(color: Color.fromRGBO(196, 135, 198, 1)),)),
+                        child:const Text("Forgot Password?", style: TextStyle(color: Color.fromRGBO(196, 135, 198, 1)),)),
                   ),
-                  SizedBox(height: 40,),
+                const  SizedBox(height: 40,),
                   GestureDetector(
                     onTap: (){
-                      Get.to(()=>Check());
+                      // Get.to(()=>Check());
                     },
                     child: Container(
                       height: 50,
-                      margin: EdgeInsets.symmetric(horizontal: 90),
+                      margin:const EdgeInsets.symmetric(horizontal: 90),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(50),
                         color: Colors.blue,
         
                       ),
-                      child: Center(
+                      child:const Center(
                         child: Text("Login",style: TextStyle(fontSize: 25, ) ,),
                       ),
                     ),
                   ),
         
         
-                  SizedBox(height: 20,),
+               const   SizedBox(height: 20,),
                   GestureDetector(
                     onTap: (){
-                      Get.to(()=>SignUp());
+                      // Get.to(()=>SignUp());
                     },
                     child: Container(
-                        child: Center(child: Text("Create Account", style: TextStyle(fontSize: 15,color: Color.fromRGBO(196, 135, 198, 1)),),)),
+                        child:const Center(child: Text("Create Account", style: TextStyle(fontSize: 15,color: Color.fromRGBO(196, 135, 198, 1)),),)),
                   ),
         
                 ],
