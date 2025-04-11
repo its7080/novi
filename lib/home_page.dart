@@ -1,11 +1,11 @@
-import 'package:novi/feature_box.dart';
-import 'package:novi/openai_service.dart';
-import 'package:novi/pallete.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:novi/ai_service.dart';
+import 'package:novi/login_page.dart';
+import 'package:novi/pallete.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,229 +15,179 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final speechToText = SpeechToText();
-  final flutterTts = FlutterTts();
+  final SpeechToText _speechToText = SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
+  final OpenAIService _openAIService = OpenAIService();
+
   String lastWords = '';
-  final OpenAIService openAIService = OpenAIService();
   String? generatedContent;
   String? generatedImageUrl;
-  int start = 200;
-  int delay = 200;
+
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    initSpeechToText();
-    initTextToSpeech();
+    _initSpeech();
+    _initTTS();
   }
 
-  Future<void> initTextToSpeech() async {
-    await flutterTts.setSharedInstance(true);
+  Future<void> _initSpeech() async {
+    await _speechToText.initialize();
+  }
+
+  Future<void> _initTTS() async {
+    await _flutterTts.setSharedInstance(true);
+  }
+
+  Future<void> _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
     setState(() {});
   }
 
-  Future<void> initSpeechToText() async {
-    await speechToText.initialize();
+  Future<void> _stopListening() async {
+    await _speechToText.stop();
     setState(() {});
   }
 
-  Future<void> startListening() async {
-    await speechToText.listen(onResult: onSpeechResult);
-    setState(() {});
-  }
-
-  Future<void> stopListening() async {
-    await speechToText.stop();
-    setState(() {});
-  }
-
-  void onSpeechResult(SpeechRecognitionResult result) async {
+  void _onSpeechResult(SpeechRecognitionResult result) async {
     if (!result.isConfident() || result.confidence < 0.7) return;
 
     lastWords = result.recognizedWords;
-
-    final speech = await openAIService.isArtPromptAPI(lastWords);
-    if (speech.contains('https')) {
-      generatedImageUrl = speech;
-      generatedContent = null;
-      setState(() {});
-    } else {
-      generatedImageUrl = null;
-      generatedContent = speech;
-      setState(() {});
-      await systemSpeak(speech);
-    }
-    await stopListening();
+    await _processQuery(lastWords);
+    await _stopListening();
   }
 
-  Future<void> systemSpeak(String content) async {
-    await flutterTts.speak(content);
+  Future<void> _processQuery(String query) async {
+    setState(() => _isProcessing = true);
+
+    try {
+      final response = await _openAIService.isArtPromptAPI(query);
+      if (response.contains('https')) {
+        generatedImageUrl = response;
+        generatedContent = null;
+      } else {
+        generatedContent = response;
+        generatedImageUrl = null;
+        await _flutterTts.speak(response);
+      }
+    } catch (e) {
+      generatedContent = "Oops! Something went wrong.";
+      generatedImageUrl = null;
+    }
+
+    setState(() => _isProcessing = false);
   }
 
   @override
   void dispose() {
+    _speechToText.stop();
+    _flutterTts.stop();
     super.dispose();
-    speechToText.stop();
-    flutterTts.stop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Pallete.whiteColor,
       appBar: AppBar(
-        title: BounceInDown(
-          child: const Text('Novi'),
-        ),
-        // leading: const Icon(Icons.menu),
+        title: const Text("Novi AI"),
         centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 165, 231, 244),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.login),
+            tooltip: 'Login',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Column(
-              children: [
-                // virtual assistant picture
-                // ZoomIn(
-                //   child: Stack(
-                //     children: [
-                //       Center(
-                //         child: Container(
-                //           height: 120,
-                //           width: 120,
-                //           margin: const EdgeInsets.only(top: 4),
-                //           decoration: const BoxDecoration(
-                //             color: Pallete.assistantCircleColor,
-                //             shape: BoxShape.circle,
-                //           ),
-                //         ),
-                //       ),
-                //       Container(
-                //         height: 123,
-                //         decoration: const BoxDecoration(
-                //           shape: BoxShape.circle,
-                //           image: DecorationImage(
-                //             image: AssetImage(
-                //               'assets/images/virtualAssistant.png',
-                //             ),
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
-                Center(
-                  child: Container(
-                    height: 123,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: AssetImage(
-                          'assets/images/virtualAssistant.png',
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      height: 120,
+                      width: 120,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image:
+                              AssetImage('assets/images/virtualAssistant.png'),
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                  ),
-                ),
-                // chat bubble
-                FadeInRight(
-                  child: Visibility(
-                    visible: generatedImageUrl == null,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      margin:
-                          const EdgeInsets.symmetric(horizontal: 40).copyWith(
-                        top: 30,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Pallete.borderColor,
+                    const SizedBox(height: 20),
+                    if (_isProcessing)
+                      const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
+                      )
+                    else if (generatedImageUrl != null)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Image.network(
+                          generatedImageUrl!,
+                          width: MediaQuery.of(context).size.width * 0.8,
                         ),
-                        borderRadius: BorderRadius.circular(20).copyWith(
-                          topLeft: Radius.zero,
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Pallete.whiteColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Pallete.borderColor),
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0),
                         child: Text(
-                          generatedContent == null
-                              ? 'Good Morning, what task can I do for you?'
-                              : generatedContent!,
+                          generatedContent ??
+                              "Good Morning 👋\nWhat can I do for you today?",
                           style: TextStyle(
+                            fontSize: generatedContent == null ? 22 : 18,
+                            fontWeight: FontWeight.w500,
                             fontFamily: 'Cera Pro',
                             color: Pallete.mainFontColor,
-                            fontSize: generatedContent == null ? 25 : 18,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
-                // if (generatedImageUrl != null)
-                //   Padding(
-                //     padding: const EdgeInsets.all(10.0),
-                //     child: ClipRRect(
-                //       borderRadius: BorderRadius.circular(20),
-                //       child: Image.network(generatedImageUrl!),
-                //     ),
-                //   ),
-                // SlideInLeft(
-                //   child: Visibility(
-                //     visible: generatedContent == null && generatedImageUrl == null,
-                //     child: Container(
-                //       padding: const EdgeInsets.all(10),
-                //       alignment: Alignment.centerLeft,
-                //       margin: const EdgeInsets.only(top: 10, left: 22),
-                //       child: const Text(
-                //         'Here are a few features',
-                //         style: TextStyle(
-                //           fontFamily: 'Cera Pro',
-                //           color: Pallete.mainFontColor,
-                //           fontSize: 20,
-                //           fontWeight: FontWeight.bold,
-                //         ),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                // features list
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: ZoomIn(
-        delay: Duration(milliseconds: start + 3 * delay),
-        child: FloatingActionButton.large(
-          backgroundColor: Pallete.firstSuggestionBoxColor,
+        delay: const Duration(milliseconds: 600),
+        child: FloatingActionButton.extended(
           onPressed: () async {
-            if (await speechToText.hasPermission &&
-                speechToText.isNotListening) {
-              await startListening();
-            } else if (speechToText.isListening) {
-              final speech = await openAIService.isArtPromptAPI(lastWords);
-              if (speech.contains('https')) {
-                generatedImageUrl = speech;
-                generatedContent = null;
-                setState(() {});
-              } else {
-                generatedImageUrl = null;
-                generatedContent = speech;
-                setState(() {});
-                await systemSpeak(speech);
-              }
-              await stopListening();
+            if (await _speechToText.hasPermission &&
+                !_speechToText.isListening) {
+              await _startListening();
+            } else if (_speechToText.isListening) {
+              await _stopListening();
             } else {
-              initSpeechToText();
+              await _initSpeech();
             }
           },
-          child: Icon(
-            speechToText.isListening ? Icons.stop : Icons.mic,
-          ),
+          label: Text(_speechToText.isListening ? "Stop" : "Talk"),
+          icon:
+              Icon(_speechToText.isListening ? Icons.stop : Icons.mic_rounded),
+          backgroundColor: Pallete.firstSuggestionBoxColor,
         ),
       ),
     );
